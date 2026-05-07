@@ -8,12 +8,12 @@ on:
 jobs:
   update:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout r3d-odin repository
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       # === Check for new bindgen run =====================================
 
@@ -34,18 +34,18 @@ jobs:
 
       - name: No new bindgen run detected
         if: steps.check.outputs.changed == 'false'
-        run: |
-          echo "r3d-odin-bindgen has not produced a new run since last update, skipping."
-          exit 0
+        run: echo "r3d-odin-bindgen has not produced a new run since last update, skipping."
 
       # === Download & update ============================================
 
       - name: Clean existing bindings
+        if: steps.check.outputs.changed == 'true'
         run: |
           rm -rf r3d/
           mkdir -p r3d/
 
       - name: Download bindings artifact
+        if: steps.check.outputs.changed == 'true'
         uses: dawidd6/action-download-artifact@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -56,6 +56,7 @@ jobs:
           run_id: ${{ steps.check.outputs.latest_run_id }}
 
       - name: Check for changes
+        if: steps.check.outputs.changed == 'true'
         id: changes
         run: |
           if [ -n "$(git status --porcelain)" ]; then
@@ -67,14 +68,14 @@ jobs:
       # === Test =========================================================
 
       - name: Setup Odin
-        if: steps.changes.outputs.has_changes == 'true'
+        if: steps.check.outputs.changed == 'true' && steps.changes.outputs.has_changes == 'true'
         uses: laytan/setup-odin@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           release: latest
 
       - name: Test all examples
-        if: steps.changes.outputs.has_changes == 'true'
+        if: steps.check.outputs.changed == 'true' && steps.changes.outputs.has_changes == 'true'
         run: |
           odin check examples/animation.odin -file
           odin check examples/basic.odin -file
@@ -98,22 +99,21 @@ jobs:
       # === Commit =======================================================
 
       - name: Commit and push
-        if: steps.changes.outputs.has_changes == 'true'
+        if: steps.check.outputs.changed == 'true' && steps.changes.outputs.has_changes == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
           echo "${{ steps.check.outputs.latest_run_id }}" > .last-bindgen-run-id
           git add .last-bindgen-run-id r3d/
           git commit -m "Update bindings from r3d-odin-bindgen@${{ steps.check.outputs.latest_sha }}"
           git push origin master
 
       - name: No changes detected
-        if: steps.changes.outputs.has_changes == 'false'
+        if: steps.check.outputs.changed == 'true' && steps.changes.outputs.has_changes == 'false'
         run: |
-          echo "${{ steps.check.outputs.latest_run_id }}" > .last-bindgen-run-id
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          echo "${{ steps.check.outputs.latest_run_id }}" > .last-bindgen-run-id
           git add .last-bindgen-run-id
           git commit -m "chore: track bindgen run ${{ steps.check.outputs.latest_run_id }}" || echo "Nothing to commit"
           git push origin master || echo "Nothing to push"
