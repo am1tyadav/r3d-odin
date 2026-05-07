@@ -49,7 +49,7 @@ jobs:
         uses: dawidd6/action-download-artifact@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          workflow: generate-binding.yml
+          workflow: bindgen.yml
           repo: Bigfoot71/r3d-odin-bindgen
           name: r3d-odin-bindings
           path: r3d/
