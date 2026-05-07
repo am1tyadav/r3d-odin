@@ -97,51 +97,45 @@ EnvAmbient :: struct {
 EnvSSAO :: struct {
     sampleCount: i32,  ///< Number of samples to compute SSAO (default: 16)
     intensity:   f32,  ///< Base occlusion strength multiplier (default: 1.0)
-    power:       f32,  ///< Exponential falloff for sharper darkening (default: 1.5)
-    radius:      f32,  ///< Sampling radius in world space (default: 0.25)
-    bias:        f32,  ///< Depth bias to prevent self-shadowing, good value is ~2% of the radius (default: 0.007)
+    power:       f32,  ///< Exponential falloff for sharper darkening (default: 1.0)
+    maxRadius:   f32,  ///< Fraction of screen height beyond which the sampling radius is clamped (default: 0.2)
+    radius:      f32,  ///< Sampling radius in world space (default: 1.0)
+    bias:        f32,  ///< Depth bias to prevent self-occlusion artifacts, in world-space units (default: 0.03)
     enabled:     bool, ///< Enable/disable SSAO effect (default: false)
 }
 
 /**
  * @brief Screen Space Indirect Lighting (SSIL) settings.
  *
- * Approximates indirect lighting by gathering light from nearby visible
- * surfaces in screen space.
- *
- * With a small radius, SSIL behaves like an extension of SSAO,
- * producing a very subtle local blending of light and surface hues.
- * With a larger radius, it becomes a better complement to SSGI,
- * reinforcing indirect lighting over a wider area.
+ * Extends the SSAO algorithm with a global illumination component: occluding
+ * surfaces not only darken the fragment (ambient occlusion) but also transfer
+ * their color to it (indirect light bounce). A larger radius than SSAO is
+ * generally preferable to capture meaningful indirect lighting contributions.
  */
 EnvSSIL :: struct {
-    sampleCount:  i32,  ///< Number of samples to compute indirect lighting (default: 2)
-    sliceCount:   i32,  ///< Number of depth slices for accumulation (default: 4)
-    radius:       f32,  ///< Maximum distance to gather light from (default: 2.0)
-    thickness:    f32,  ///< Thickness threshold for occluders (default: 1.0)
-    intensity:    f32,  ///< IL intensity multiplier (default: 1.0)
-    aoPower:      f32,  ///< AO exponent/power (default: 1.0)
-    denoiseSteps: i32,  ///< Number of denoiser iterations (default: 4)
-    enabled:      bool, ///< Enable/disable SSIL effect (default: false)
+    sampleCount: i32,  ///< Number of samples to compute SSIL (default: 16)
+    giIntensity: f32,  ///< Indirect light strength multiplier (default: 1.0)
+    aoIntensity: f32,  ///< Ambient occlusion strength multiplier (default: 1.0)
+    aoPower:     f32,  ///< Exponential falloff for sharper occlusion darkening (default: 1.0)
+    maxRadius:   f32,  ///< Fraction of screen height beyond which the sampling radius is clamped (default: 0.2)
+    radius:      f32,  ///< Sampling radius in world space (default: 4.0)
+    bias:        f32,  ///< Depth bias to prevent self-occlusion artifacts, in world-space units (default: 0.03)
+    enabled:     bool, ///< Enable/disable SSIL effect (default: false)
 }
 
 /**
  * @brief Screen Space Global Illumination (SSGI) settings.
  *
- * Real-time global illlumination calculated in screen space.
- * @note Best suited for enclosed/indoor environments.
+ * Computes indirect lighting from the scene's visible surfaces in real time.
  */
 EnvSSGI :: struct {
-    sampleCount:  i32,  ///< Number of rays per pixel (default: 2)
-    maxRaySteps:  i32,  ///< Maximum ray marching steps (default: 32)
-    stepSize:     f32,  ///< rl.Ray step size (default: 0.125)
-    thickness:    f32,  ///< Depth tolerance for valid hits (default: 1.0)
-    maxDistance:  f32,  ///< Maximum ray distance (default: 4.0)
-    intensity:    f32,  ///< GI intensity multiplier (default: 3.0)
-    fadeStart:    f32,  ///< Distance at which the GI fade begins (default: 8.0)
-    fadeEnd:      f32,  ///< Distance at which GI is fully faded (default: 16.0)
-    denoiseSteps: i32,  ///< Number of denoiser iterations (default: 5)
-    enabled:      bool, ///< Enable/disable SSGI (default: false)
+    sliceCount:      i32,  ///< Number of directions sampled per pixel. Higher = fewer noise streaks, higher cost. (default: 4)
+    edgeFade:        f32,  ///< Fades out GI near screen edges to hide emissive objects partially off-screen. (default: 0.1)
+    distanceFalloff: f32,  ///< How quickly indirect light fades with distance. Higher = shorter reach, darker result. (default: 1.0)
+    normalRejection: f32,  ///< Prevents surfaces from receiving light through their own backside. 0 = off, 1 = physically correct. May look inconsistent with non-directional emissives. (default: 0.0)
+    intensity:       f32,  ///< Brightness of the indirect lighting. Dimly lit scenes may require significantly higher values to show probable contribution. (default: 1.0)
+    denoiseSteps:    i32,  ///< Number of denoiser passes. Higher = smoother result, slightly higher cost. (default: 4)
+    enabled:         bool, ///< Enable or disable SSGI entirely. (default: false)
 }
 
 /**
@@ -284,32 +278,31 @@ ENVIRONMENT_BASE :: Environment {
     },
     ssao = {
         sampleCount = 16,
-        intensity   = 0.5,
-        power       = 1.5,
-        radius      = 0.5,
-        bias        = 0.02,
+        intensity   = 1.0,
+        power       = 1.0,
+        maxRadius   = 0.2,
+        radius      = 1.0,
+        bias        = 0.03,
         enabled     = false,
     },
     ssil = {
-        sampleCount  = 2,
-        sliceCount   = 4,
-        radius       = 2.0,
-        thickness    = 1.0,
-        intensity    = 1.0,
-        aoPower      = 1.0,
-        denoiseSteps = 4,
-        enabled      = false,
+        sampleCount = 16,
+        giIntensity = 1.0,
+        aoIntensity = 1.0,
+        aoPower     = 1.0,
+        maxRadius   = 0.2,
+        radius      = 4.0,
+        bias        = 0.03,
+        enabled     = false,
     },
     ssgi = {
-        sampleCount  = 2,
-        maxRaySteps  = 32,
-        stepSize     = 0.125,
-        thickness    = 1.0,
-        maxDistance  = 4.0,
-        fadeStart    = 8.0,
-        fadeEnd      = 16.0,
-        denoiseSteps = 5,
-        enabled      = false,
+        sliceCount = 4,
+        edgeFade = 0.1,
+        distanceFalloff = 1.0,
+        normalRejection = 0.0,
+        intensity = 1.0,
+        denoiseSteps = 4,
+        enabled = false,
     },
     ssr = {
         maxRaySteps = 32,
@@ -340,6 +333,7 @@ ENVIRONMENT_BASE :: Environment {
         mode        = .DISABLED,
         focusPoint  = 10.0,
         focusScale  = 1.0,
+        nearScale   = 1.0,
         maxBlurSize = 20.0,
     },
     tonemap = {

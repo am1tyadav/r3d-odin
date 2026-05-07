@@ -24,6 +24,13 @@ when ODIN_OS == .Windows {
 }
 
 /**
+ * @brief Fixed-length string type for mesh names.
+ *
+ * The size can be freely adjusted before compilation.
+ */
+MeshName :: [32]i8
+
+/**
  * @brief Represents a complete 3D model with meshes and materials.
  *
  * Contains multiple meshes and their associated materials, along with animation and bounding information.
@@ -31,6 +38,7 @@ when ODIN_OS == .Windows {
 Model :: struct {
     meshes:        [^]Mesh,     ///< Array of meshes composing the model.
     meshData:      [^]MeshData, ///< Array of meshes data in RAM (optional, can be NULL).
+    meshNames:     ^MeshName,   ///< Array of meshes names (optional, can be NULL).
     materials:     [^]Material, ///< Array of materials used by the model.
     meshMaterials: [^]i32,      ///< Array of material indices, one per mesh.
     meshCount:     i32,         ///< Number of meshes.
@@ -124,5 +132,32 @@ foreign lib {
      * Set to false if textures are still being used elsewhere to avoid freeing shared resources.
      */
     UnloadModel :: proc(model: Model, unloadMaterials: bool) ---
+
+    /**
+     * @brief Returns the index of the mesh with the given name.
+     *
+     * @param model The model to search in.
+     * @param meshName The name of the mesh to look up.
+     * @return The mesh index, or -1 if not found or if @c meshNames is NULL.
+     */
+    GetModelMeshIndex :: proc(model: Model, meshName: cstring) -> i32 ---
+
+    /**
+     * @brief Returns a pointer to the mesh with the given name.
+     *
+     * @param model The model to search in.
+     * @param meshName The name of the mesh to look up.
+     * @return A pointer to the mesh, or NULL if not found or if @c meshNames is NULL.
+     */
+    GetModelMesh :: proc(model: Model, meshName: cstring) -> ^Mesh ---
+
+    /**
+     * @brief Returns a pointer to the mesh data with the given name.
+     *
+     * @param model The model to search in.
+     * @param meshName The name of the mesh to look up.
+     * @return A pointer to the mesh data, or NULL if not found or if @c meshNames or @c meshData is NULL.
+     */
+    GetModelMeshData :: proc(model: Model, meshName: cstring) -> ^MeshData ---
 }
 

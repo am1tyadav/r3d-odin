@@ -23,6 +23,13 @@ when ODIN_OS == .Windows {
     }
 }
 
+/**
+ * @brief Import and store mesh names from the model file.
+ *
+ * When enabled, mesh names are retrieved during import and stored in @c meshNames.
+ */
+R3D_IMPORT_MESH_NAMES   :: (1<<1)
+
 Importer :: struct {}
 
 @(default_calling_convention="c", link_prefix="R3D_")
