@@ -122,7 +122,7 @@ foreign lib {
      * @param outPenetration Optional: receives penetration depth
      * @return true if depenetration occurred
      */
-    DepenetrateCapsuleBoudningBox :: proc(capsule: ^Capsule, box: rl.BoundingBox, outPenetration: ^f32) -> bool ---
+    DepenetrateCapsuleBoundingBox :: proc(capsule: ^Capsule, box: rl.BoundingBox, outPenetration: ^f32) -> bool ---
 
     /**
      * @brief Check if a sphere is supported by a bounding box in a given direction
