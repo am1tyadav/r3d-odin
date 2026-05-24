@@ -38,8 +38,8 @@ main :: proc() {
 
     // Create transforms for instanced billboards
     instances := r3d.LoadInstanceBuffer(64, {.POSITION, .SCALE})
-    positions := cast([^]rl.Vector3)r3d.MapInstances(instances, {.POSITION})
-    scales := cast([^]rl.Vector3)r3d.MapInstances(instances, {.SCALE})
+    positions := cast([^]rl.Vector3)r3d.MapInstances(instances, {.POSITION}, false)
+    scales := cast([^]rl.Vector3)r3d.MapInstances(instances, {.SCALE}, false)
     for i in 0..<64 {
         scaleFactor := f32(rl.GetRandomValue(25, 50)) / 10.0
         scales[i] = {scaleFactor, scaleFactor, 1.0}

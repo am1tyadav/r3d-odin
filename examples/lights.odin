@@ -36,7 +36,7 @@ main :: proc() {
     // Allocate transforms for all spheres
     instances := r3d.LoadInstanceBuffer(GRID_SIZE * GRID_SIZE, {.POSITION})
     defer r3d.UnloadInstanceBuffer(instances)
-    positions := cast([^]rl.Vector3)r3d.MapInstances(instances, {.POSITION})
+    positions := cast([^]rl.Vector3)r3d.MapInstances(instances, {.POSITION}, false)
     for x in -50..<50 {
         for z in -50..<50 {
             positions[(z+50)*GRID_SIZE + (x+50)] = {f32(x) + 0.5, 0, f32(z) + 0.5}

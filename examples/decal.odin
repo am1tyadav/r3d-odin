@@ -37,7 +37,7 @@ main :: proc() {
 
     // Create data for instanced drawing
     instances := r3d.LoadInstanceBuffer(3, {.POSITION})
-    positions := cast([^]rl.Vector3)r3d.MapInstances(instances, {.POSITION})
+    positions := cast([^]rl.Vector3)r3d.MapInstances(instances, {.POSITION}, false)
     positions[0] = {-1.25, 0, 1}
     positions[1] = {0, 0, 1}
     positions[2] = {1.25, 0, 1}

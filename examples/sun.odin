@@ -29,7 +29,7 @@ main :: proc() {
     // Create transforms for instanced spheres
     instances := r3d.LoadInstanceBuffer(INSTANCE_COUNT, {.POSITION})
     defer r3d.UnloadInstanceBuffer(instances)
-    positions := cast([^]rl.Vector3)r3d.MapInstances(instances, {.POSITION})
+    positions := cast([^]rl.Vector3)r3d.MapInstances(instances, {.POSITION}, false)
     spacing: f32 = 1.5
     offsetX := (X_INSTANCES * spacing) / 2.0
     offsetZ := (Y_INSTANCES * spacing) / 2.0

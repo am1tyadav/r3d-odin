@@ -44,7 +44,7 @@ main :: proc() {
 
     // Create model instances
     instances := r3d.LoadInstanceBuffer(4, {.POSITION})
-    positions := cast([^]rl.Vector3)r3d.MapInstances(instances, {.POSITION})
+    positions := cast([^]rl.Vector3)r3d.MapInstances(instances, {.POSITION}, false)
     for z in 0..<2 {
         for x in 0..<2 {
             positions[z*2 + x] = {f32(x) - 0.5, 0, f32(z) - 0.5}

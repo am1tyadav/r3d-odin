@@ -28,10 +28,10 @@ main :: proc() {
     // Generate random transforms and colors for instances
     instances := r3d.LoadInstanceBuffer(INSTANCE_COUNT, {.POSITION, .ROTATION, .SCALE, .COLOR})
     defer r3d.UnloadInstanceBuffer(instances)
-    positions := cast([^]rl.Vector3)r3d.MapInstances(instances, {.POSITION})
-    rotations := cast([^]rl.Quaternion)r3d.MapInstances(instances, {.ROTATION})
-    scales := cast([^]rl.Vector3)r3d.MapInstances(instances, {.SCALE})
-    colors := cast([^]rl.Color)r3d.MapInstances(instances, {.COLOR})
+    positions := cast([^]rl.Vector3)r3d.MapInstances(instances, {.POSITION}, false)
+    rotations := cast([^]rl.Quaternion)r3d.MapInstances(instances, {.ROTATION}, false)
+    scales := cast([^]rl.Vector3)r3d.MapInstances(instances, {.SCALE}, false)
+    colors := cast([^]rl.Color)r3d.MapInstances(instances, {.COLOR}, false)
 
     for i in 0..<INSTANCE_COUNT
     {

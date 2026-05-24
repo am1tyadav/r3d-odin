@@ -101,7 +101,7 @@ main :: proc() {
         }
         particleCount = alive
 
-        r3d.UploadInstances(instances, {.POSITION}, 0, particleCount, raw_data(positions[:]))
+        r3d.UploadInstances(instances, {.POSITION}, 0, particleCount, raw_data(positions[:]), true)
 
         rl.BeginDrawing()
             r3d.Begin(camera)

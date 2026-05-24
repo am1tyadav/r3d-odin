@@ -45,8 +45,8 @@ main :: proc() {
     idx := 0
     instances := r3d.LoadInstanceBuffer(INSTANCE_COUNT, {.POSITION, .COLOR})
     defer r3d.UnloadInstanceBuffer(instances)
-    positions := cast([^]rl.Vector3)r3d.MapInstances(instances, {.POSITION})
-    colors := cast([^]rl.Color)r3d.MapInstances(instances, {.COLOR})
+    positions := cast([^]rl.Vector3)r3d.MapInstances(instances, {.POSITION}, false)
+    colors := cast([^]rl.Color)r3d.MapInstances(instances, {.COLOR}, false)
     for x in 0..<X_INSTANCES {
         for y in 0..<Y_INSTANCES {
             positions[idx] = {f32(x) * spacing - offsetX, 0, f32(y) * spacing - offsetZ}
