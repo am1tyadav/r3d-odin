@@ -24,71 +24,100 @@ when ODIN_OS == .Windows {
 }
 
 /**
- * @brief Represents a vertex and all its attributes for a mesh.
+ * @brief Compact vertex format used by R3D meshes.
+ *
+ * rl.Texture coordinates are stored as float16 values.
+ * Normals and tangents are stored as signed normalized 8-bit values.
+ * Bone weights are stored as unsigned 8-bit values and should sum to 255.
  */
 Vertex :: struct {
-    position:    rl.Vector3, ///< The 3D position of the vertex in object space.
-    texcoord:    [2]u16,  ///< The 2D texture coordinates (UV) for mapping textures.
-    normal:      [4]i8,   ///< The normal vector used for lighting calculations.
-    tangent:     [4]i8,   ///< The tangent vector, used in normal mapping (often with a handedness in w).
-    color:       rl.Color,   ///< Vertex color, in RGBA32.
-    boneIndices: [4]u8,   ///< Indices of up to 4 bones that influence this vertex (for skinning).
-    boneWeights: [4]u8,   ///< Corresponding bone weights (should sum to 255). Defines the influence of each bone.
+    position:    rl.Vector3, ///< Vertex position in object space.
+    texcoord:    [2]u16,  ///< rl.Texture coordinates stored as float16.
+    normal:      [4]i8,   ///< Normal vector stored as SNORM8. XYZ are used, W is unused.
+    tangent:     [4]i8,   ///< Tangent vector stored as SNORM8. XYZ are tangent, W stores handedness.
+    color:       rl.Color,   ///< Vertex color in RGBA8.
+    boneIndices: [4]u8,   ///< Indices of up to 4 bones influencing this vertex.
+    boneWeights: [4]u8,   ///< Bone weights in UNORM8. Values should sum to 255.
 }
 
 @(default_calling_convention="c", link_prefix="R3D_")
 foreign lib {
     /**
-     * @brief Constructs a fully encoded @ref R3D_Vertex from unpacked attribute data.
+     * @brief Constructs a packed R3D vertex from unpacked attribute data.
+     *
+     * rl.Texture coordinates are packed to float16.
+     * Normals and tangents are packed to SNORM8.
+     *
      * @param position Vertex position in object space.
-     * @param texcoord UV texture coordinates (float, any range).
-     * @param normal Unit normal vector.
-     * @param tangent Tangent vector with handedness in w (+1 or -1).
+     * @param texcoord rl.Texture coordinates in float32. Any range is supported.
+     * @param normal Normal vector. Components are clamped to the [-1, 1] range.
+     * @param tangent Tangent vector. XYZ components are clamped to [-1, 1], W stores handedness.
      * @param color Vertex color in RGBA8.
-     * @return Encoded vertex ready for GPU upload.
+     *
+     * @return Packed vertex ready for GPU upload.
      */
     MakeVertex :: proc(position: rl.Vector3, texcoord: rl.Vector2, normal: rl.Vector3, tangent: rl.Vector4, color: rl.Color) -> Vertex ---
 
     /**
-     * @brief Encodes a UV coordinate pair from float32 to float16.
-     * @param dst Output buffer of 2 uint16_t (float16). Must not be NULL.
-     * @param src UV coordinates in float32. Supports any range (tiling included).
+     * @brief Packs texture coordinates from float32 to float16.
+     *
+     * @param dst Output buffer of 2 uint16_t values. Must not be NULL.
+     * @param src rl.Texture coordinates in float32. Any range is supported.
      */
-    EncodeTexCoord :: proc(dst: ^u16, src: rl.Vector2) ---
+    PackTexCoord :: proc(dst: ^u16, src: rl.Vector2) ---
 
     /**
-     * @brief Decodes a float16 UV coordinate pair back to float32.
-     * @param src Input buffer of 2 uint16_t (float16). Must not be NULL.
-     * @return Decoded UV coordinates in float32.
+     * @brief Unpacks texture coordinates from float16 to float32.
+     *
+     * @param src Input buffer of 2 uint16_t values. Must not be NULL.
+     *
+     * @return Unpacked texture coordinates in float32.
      */
-    DecodeTexCoord :: proc(src: ^u16) -> rl.Vector2 ---
+    UnpackTexCoord :: proc(src: ^u16) -> rl.Vector2 ---
 
     /**
-     * @brief Encodes a unit normal vector from float32 to snorm8 (XYZ).
-     * @param dst Output buffer of 4 int8_t. W is set to 0. Must not be NULL.
-     * @param src Unit normal vector. Components must be in [-1, 1].
+     * @brief Packs a normal vector from float32 to SNORM8.
+     *
+     * XYZ components are clamped to the [-1, 1] range before packing.
+     * The fourth component is set to 0.
+     *
+     * @param dst Output buffer of 4 int8_t values. Must not be NULL.
+     * @param src Normal vector to pack.
      */
-    EncodeNormal :: proc(dst: ^i8, src: rl.Vector3) ---
+    PackNormal :: proc(dst: ^i8, src: rl.Vector3) ---
 
     /**
-     * @brief Decodes a snorm8 normal back to float32.
-     * @param src Input buffer of 4 int8_t (only XYZ are read). Must not be NULL.
-     * @return Decoded normal vector. Not guaranteed to be unit length.
+     * @brief Unpacks a normal vector from SNORM8 to float32.
+     *
+     * Only XYZ components are read.
+     *
+     * @param src Input buffer of 4 int8_t values. Must not be NULL.
+     *
+     * @return Unpacked normal vector. Not guaranteed to be unit length.
      */
-    DecodeNormal :: proc(src: ^i8) -> rl.Vector3 ---
+    UnpackNormal :: proc(src: ^i8) -> rl.Vector3 ---
 
     /**
-     * @brief Encodes a tangent vector from float32 to snorm8, preserving handedness in W.
-     * @param dst Output buffer of 4 int8_t. Must not be NULL.
-     * @param src Tangent vector. XYZ must be in [-1, 1]; W encodes handedness (+1 or -1).
+     * @brief Packs a tangent vector from float32 to SNORM8.
+     *
+     * XYZ components are clamped to the [-1, 1] range before packing.
+     * W stores tangent handedness and is packed as either +1 or -1.
+     *
+     * @param dst Output buffer of 4 int8_t values. Must not be NULL.
+     * @param src Tangent vector to pack. W is interpreted as handedness.
      */
-    EncodeTangent :: proc(dst: ^i8, src: rl.Vector4) ---
+    PackTangent :: proc(dst: ^i8, src: rl.Vector4) ---
 
     /**
-     * @brief Decodes a snorm8 tangent back to float32.
-     * @param src Input buffer of 4 int8_t. Must not be NULL.
-     * @return Decoded tangent. W is exactly +1.0 or -1.0 (handedness).
+     * @brief Unpacks a tangent vector from SNORM8 to float32.
+     *
+     * XYZ components are unpacked from SNORM8.
+     * W is returned as exactly +1.0f or -1.0f.
+     *
+     * @param src Input buffer of 4 int8_t values. Must not be NULL.
+     *
+     * @return Unpacked tangent vector.
      */
-    DecodeTangent :: proc(src: ^i8) -> rl.Vector4 ---
+    UnpackTangent :: proc(src: ^i8) -> rl.Vector4 ---
 }
 

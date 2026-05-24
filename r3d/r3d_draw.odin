@@ -23,26 +23,68 @@ when ODIN_OS == .Windows {
     }
 }
 
+/**
+ * @brief Describes an R3D rendering view.
+ *
+ * A view defines the camera and output area used for a single rendering
+ * session. It combines an R3D camera, an optional render target and an optional
+ * viewport inside that target.
+ *
+ * If `target` is zero-initialized, rendering is directed to the default
+ * framebuffer. If `viewport.width` or `viewport.height` is less than or equal
+ * to zero, the full target size is used.
+ */
+View :: struct {
+    camera:   Camera,        ///< Camera used for this view.
+    target:   rl.RenderTexture, ///< Render target. Zero-initialized means screen/backbuffer.
+    viewport: rl.Rectangle,     ///< Viewport inside the target. If width or height <= 0, the full target is used.
+}
+
 @(default_calling_convention="c", link_prefix="R3D_")
 foreign lib {
     /**
-     * @brief Begins a rendering session using the given camera.
+     * @brief Begins a rendering session using the given raylib camera.
      *
      * Rendering output is directed to the default framebuffer.
      *
-     * @param camera rl.Camera used to render the scene.
+     * The given rl.Camera3D is converted internally to an R3D_Camera. Since raylib
+     * cameras do not store near/far clipping planes, the converted camera uses the
+     * current rlgl culling distances for those values.
+     *
+     * @param camera Camera used to render the scene.
      */
     Begin :: proc(camera: rl.Camera3D) ---
 
     /**
-     * @brief Begins a rendering session with a custom render target.
+     * @brief Begins a rendering session using an R3D camera.
      *
-     * If the render target is invalid (ID = 0), rendering goes to the screen.
+     * Rendering output is directed to the default framebuffer.
      *
-     * @param target Render texture to render into.
-     * @param camera rl.Camera used to render the scene.
+     * This entry point provides access to R3D-specific camera features such as
+     * layer masks, custom near/far clipping planes and quaternion-based orientation.
+     *
+     * @param camera Camera used to render the scene.
      */
-    BeginEx :: proc(target: rl.RenderTexture, camera: rl.Camera3D) ---
+    BeginEx :: proc(camera: Camera) ---
+
+    /**
+     * @brief Begins a rendering session using a complete R3D view descriptor.
+     *
+     * This is the advanced entry point. It allows the caller to specify the camera,
+     * render target and viewport used for the rendering session.
+     *
+     * The view camera is used as-is, including its near/far clipping planes and
+     * layer mask. If the camera was created from a raylib rl.Camera3D using
+     * `R3D_CameraFromRL()`, its near/far planes come from the current rlgl culling
+     * distances because raylib cameras do not store those values directly.
+     *
+     * Use this function for render-to-texture workflows, custom viewports,
+     * multipass rendering, editor views, minimaps, probes or any case where the
+     * default framebuffer is not enough.
+     *
+     * @param view View descriptor used to render the scene.
+     */
+    BeginPro :: proc(view: View) ---
 
     /**
      * @brief Ends the current rendering session.

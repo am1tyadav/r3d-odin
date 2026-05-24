@@ -279,48 +279,6 @@ foreign lib {
      * @param space rl.Color space to use for color inputs (linear or sRGB).
      */
     SetColorSpace :: proc(space: ColorSpace) ---
-
-    /**
-     * @brief Get the currently active global rendering layers.
-     *
-     * Returns the bitfield representing the currently active layers in the renderer.
-     * By default, the internal active layers are set to 0, which means that any
-     * non-zero layer assigned to an object will NOT be rendered unless explicitly
-     * activated.
-     *
-     * @return R3D_Layer Bitfield of active layers.
-     */
-    GetActiveLayers :: proc() -> Layer ---
-
-    /**
-     * @brief Set the active global rendering layers.
-     *
-     * Replaces the current set of active layers with the given bitfield.
-     *
-     * @param bitfield Bitfield representing the layers to activate.
-     */
-    SetActiveLayers :: proc(bitfield: Layer) ---
-
-    /**
-     * @brief Enable one or more layers without affecting other active layers.
-     *
-     * This function sets the bits in the global active layers corresponding to
-     * the bits in the provided bitfield. Layers already active remain active.
-     *
-     * @param bitfield Bitfield representing one or more layers to enable.
-     */
-    EnableLayers :: proc(bitfield: Layer) ---
-
-    /**
-     * @brief Disable one or more layers without affecting other active layers.
-     *
-     * This function clears the bits in the global active layers corresponding to
-     * the bits in the provided bitfield. Layers not included in the bitfield
-     * remain unchanged.
-     *
-     * @param bitfield Bitfield representing one or more layers to disable.
-     */
-    DisableLayers :: proc(bitfield: Layer) ---
 }
 
 /**

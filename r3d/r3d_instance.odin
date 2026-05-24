@@ -24,27 +24,98 @@ when ODIN_OS == .Windows {
 }
 
 /**
+ * @brief Storage format used by an instance attribute.
+ *
+ * The selected format controls how the attribute is stored in GPU memory.
+ * All formats are read by the shader as floating-point values.
+ *
+ * UNORM formats are converted to the [0, 1] range.
+ * SNORM formats are converted to the [-1, 1] range.
+ */
+InstanceFormat :: enum u32 {
+    FLOAT32 = 0, ///< 32-bit floating-point component.
+    FLOAT16 = 1, ///< 16-bit floating-point component.
+    UNORM16 = 2, ///< 16-bit unsigned normalized component.
+    SNORM16 = 3, ///< 16-bit signed normalized component.
+    UNORM8  = 4, ///< 8-bit unsigned normalized component.
+    SNORM8  = 5, ///< 8-bit signed normalized component.
+    COUNT   = 6, ///< Number of available instance formats.
+}
+
+/**
+ * @brief Describes the layout of an instance buffer.
+ *
+ * `flags` defines which instance attributes are allocated.
+ * `formats` defines the storage format used by each attribute.
+ *
+ * The `formats` array is indexed in the same order as the instance attribute
+ * flags:
+ *
+ * - index 0: `R3D_INSTANCE_POSITION`
+ * - index 1: `R3D_INSTANCE_ROTATION`
+ * - index 2: `R3D_INSTANCE_SCALE`
+ * - index 3: `R3D_INSTANCE_COLOR`
+ * - index 4: `R3D_INSTANCE_CUSTOM`
+ *
+ * Data uploaded or mapped for an attribute must match the format selected for
+ * that attribute.
+ */
+InstanceLayout :: struct {
+    formats: [5]InstanceFormat, ///< Storage format for each instance attribute.
+    flags:   InstanceFlags,     ///< Enabled instance attribute mask.
+}
+
+/**
  * @brief GPU buffers storing instance attribute streams.
  *
- * buffers: One VBO per attribute (indexed by flag order).
- * capcity: Maximum number of instances.
- * flags: Enabled attribute mask.
+ * Each enabled attribute owns one GPU buffer. The enabled attributes and their
+ * storage formats are described by `layout`.
  */
 InstanceBuffer :: struct {
-    buffers:  [5]u32,
-    flags:    InstanceFlags,
-    capacity: i32,
+    buffers:  [5]u32,         ///< One GPU buffer per attribute, indexed by attribute order.
+    layout:   InstanceLayout, ///< Instance buffer layout.
+    capacity: i32,            ///< Maximum number of instances.
 }
 
 @(default_calling_convention="c", link_prefix="R3D_")
 foreign lib {
     /**
-     * @brief Create instance buffers on the GPU.
-     * @param capacity Max instances.
+     * @brief Creates instance buffers on the GPU using the default layout.
+     *
+     * This is the simple entry point. It allocates one GPU buffer for each enabled
+     * attribute in `flags`.
+     *
+     * Default formats:
+     *
+     * - position: FLOAT32
+     * - rotation: FLOAT32
+     * - scale: FLOAT32
+     * - color: UNORM8
+     * - custom: FLOAT32
+     *
+     * @param capacity Maximum number of instances.
      * @param flags Attribute mask to allocate.
-     * @return Initialized instance buffer.
+     *
+     * @return Initialized instance buffer, or an empty buffer on failure.
      */
     LoadInstanceBuffer :: proc(capacity: i32, flags: InstanceFlags) -> InstanceBuffer ---
+
+    /**
+     * @brief Creates instance buffers on the GPU using a custom layout.
+     *
+     * This is the advanced entry point. It allocates one GPU buffer for each
+     * enabled attribute in `layout.flags`, using the corresponding storage format
+     * from `layout.formats`.
+     *
+     * Data uploaded or mapped for each attribute must match the format selected in
+     * the layout.
+     *
+     * @param capacity Maximum number of instances.
+     * @param layout Instance layout describing enabled attributes and formats.
+     *
+     * @return Initialized instance buffer, or an empty buffer on failure.
+     */
+    LoadInstanceBufferEx :: proc(capacity: i32, layout: InstanceLayout) -> InstanceBuffer ---
 
     /**
      * @brief Destroy all GPU buffers owned by this instance buffer.
@@ -86,6 +157,35 @@ foreign lib {
      * @param flags Bitmask of attributes to unmap.
      */
     UnmapInstances :: proc(buffer: InstanceBuffer, flags: InstanceFlags) ---
+
+    /**
+     * @brief Sets the storage format of an instance attribute in a layout.
+     *
+     * `attribute` must be a single instance attribute flag, such as
+     * `R3D_INSTANCE_POSITION`, not a combination of multiple flags.
+     *
+     * This function only changes the format stored in the layout. It does not
+     * enable the attribute in `layout.flags`.
+     *
+     * @param layout Layout to modify.
+     * @param attribute Single attribute flag to modify.
+     * @param format New storage format.
+     */
+    SetInstanceFormat :: proc(layout: ^InstanceLayout, attribute: InstanceFlags, format: InstanceFormat) ---
+
+    /**
+     * @brief Gets the storage format of an instance attribute from a layout.
+     *
+     * `attribute` must be a single instance attribute flag, such as
+     * `R3D_INSTANCE_POSITION`, not a combination of multiple flags.
+     *
+     * @param layout Layout to read from.
+     * @param attribute Single attribute flag to query.
+     *
+     * @return Storage format of the requested attribute, or FLOAT32 if the
+     * attribute flag is invalid.
+     */
+    GetInstanceFormat :: proc(layout: InstanceLayout, attribute: InstanceFlags) -> InstanceFormat ---
 }
 
 /**
