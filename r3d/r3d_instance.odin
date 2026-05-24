@@ -89,12 +89,12 @@ foreign lib {
      *
      * - position: FLOAT32
      * - rotation: FLOAT32
-     * - scale: FLOAT32
-     * - color: UNORM8
-     * - custom: FLOAT32
+     * - scale:    FLOAT32
+     * - color:    UNORM8
+     * - custom:   FLOAT32
      *
      * @param capacity Maximum number of instances.
-     * @param flags Attribute mask to allocate.
+     * @param flags    Attribute mask to allocate.
      *
      * @return Initialized instance buffer, or an empty buffer on failure.
      */
@@ -111,7 +111,7 @@ foreign lib {
      * the layout.
      *
      * @param capacity Maximum number of instances.
-     * @param layout Instance layout describing enabled attributes and formats.
+     * @param layout   Instance layout describing enabled attributes and formats.
      *
      * @return Initialized instance buffer, or an empty buffer on failure.
      */
@@ -130,27 +130,55 @@ foreign lib {
      * if keepData is true, their existing content is copied to the new
      * buffers before the old ones are deleted.
      *
-     * @param buffer Instance buffer to resize (updated in place).
+     * @param buffer      Instance buffer to resize (updated in place).
      * @param newCapacity Desired minimum capacity in number of instances.
-     * @param keepData If true, preserves existing instance data.
+     * @param keepData    If true, preserves existing instance data.
      */
     ResizeInstanceBuffer :: proc(buffer: ^InstanceBuffer, newCapacity: i32, keepData: bool) ---
 
     /**
-     * @brief Upload a contiguous range of instance data.
-     * @param flag Attribute being updated (single bit).
-     * @param offset First instance index.
-     * @param count Number of instances.
-     * @param data Source pointer.
+     * @brief Upload a contiguous range of instance data to a GPU buffer.
+     *
+     * @param buffer  Instance buffer containing the target GPU buffer.
+     * @param flag    Attribute to update (single bit).
+     * @param offset  First instance index.
+     * @param count   Number of instances to upload.
+     * @param data    Source data pointer.
+     * @param discard If true, the entire GPU buffer is orphaned before upload,
+     *                avoiding a GPU/CPU sync at the cost of discarding existing data.
+     *                Safe to use when rewriting the full buffer each frame.
      */
-    UploadInstances :: proc(buffer: InstanceBuffer, flag: InstanceFlags, offset: i32, count: i32, data: rawptr) ---
+    UploadInstances :: proc(buffer: InstanceBuffer, flag: InstanceFlags, offset: i32, count: i32, data: rawptr, discard: bool) ---
 
     /**
-     * @brief Map an attribute buffer for CPU write access.
-     * @param flag Attribute to map (single bit).
-     * @return Writable pointer, or NULL on error.
+     * @brief Map an entire attribute buffer for CPU write access.
+     *
+     * Call R3D_UnmapInstances when done writing.
+     *
+     * @param buffer  Instance buffer containing the target GPU buffer.
+     * @param flag    Attribute to map (single bit).
+     * @param discard If true, existing buffer contents are invalidated,
+     *                allowing the driver to return a fresh memory region
+     *                without stalling on in-flight GPU reads.
+     * @return        Writable pointer to the full buffer, or NULL on error.
      */
-    MapInstances :: proc(buffer: InstanceBuffer, flag: InstanceFlags) -> rawptr ---
+    MapInstances :: proc(buffer: InstanceBuffer, flag: InstanceFlags, discard: bool) -> rawptr ---
+
+    /**
+     * @brief Map a sub-range of an attribute buffer for CPU write access.
+     *
+     * Prefer this over R3D_MapInstances for partial updates to avoid
+     * touching unrelated data. Call R3D_UnmapInstances when done writing.
+     *
+     * @param buffer  Instance buffer containing the target GPU buffer.
+     * @param flag    Attribute to map (single bit).
+     * @param offset  First instance index of the mapped range.
+     * @param count   Number of instances to map.
+     * @param discard If true, the mapped range is invalidated, allowing the
+     *                driver to skip syncing that region with in-flight GPU reads.
+     * @return        Writable pointer to the mapped range, or NULL on error.
+     */
+    MapInstancesEx :: proc(buffer: InstanceBuffer, flag: InstanceFlags, offset: i32, count: i32, discard: bool) -> rawptr ---
 
     /**
      * @brief Unmap one or more previously mapped attribute buffers.
@@ -167,9 +195,9 @@ foreign lib {
      * This function only changes the format stored in the layout. It does not
      * enable the attribute in `layout.flags`.
      *
-     * @param layout Layout to modify.
+     * @param layout    Layout to modify.
      * @param attribute Single attribute flag to modify.
-     * @param format New storage format.
+     * @param format    New storage format.
      */
     SetInstanceFormat :: proc(layout: ^InstanceLayout, attribute: InstanceFlags, format: InstanceFormat) ---
 
@@ -179,7 +207,7 @@ foreign lib {
      * `attribute` must be a single instance attribute flag, such as
      * `R3D_INSTANCE_POSITION`, not a combination of multiple flags.
      *
-     * @param layout Layout to read from.
+     * @param layout    Layout to read from.
      * @param attribute Single attribute flag to query.
      *
      * @return Storage format of the requested attribute, or FLOAT32 if the
