@@ -28,6 +28,35 @@ when ODIN_OS == .Windows {
 // ========================================
 ScreenShader :: struct {}
 
+/**
+ * @brief Screen shader execution stage.
+ *
+ * Screen shaders are custom fullscreen post-processing passes inserted at
+ * specific points of the frame.
+ *
+ * The SCENE stage runs before built-in post-processing and receives
+ * scene-referred HDR linear color. It is an advanced stage: effects
+ * may affect bloom, auto exposure, and all later passes.
+ *
+ * The POST stage runs after built-in HDR post-processing, but before output
+ * conversion. It still receives scene-referred HDR linear color.
+ *
+ * The OUTPUT stage runs after tonemapping/output conversion, but before
+ * anti-aliasing. It receives display-referred LDR color and is suitable for
+ * most artistic image effects.
+ *
+ * The FINAL stage runs after anti-aliasing, before the final blit. It receives
+ * the final display-referred image and is suitable for overlays, grain,
+ * scanlines, sharpening, fades, and debug visualization.
+ */
+ScreenShaderStage :: enum u32 {
+    SCENE  = 0, ///< Before built-in post-processing; advanced HDR scene stage.
+    POST   = 1, ///< After built-in HDR post-processing, before output conversion.
+    OUTPUT = 2, ///< After output conversion, before anti-aliasing.
+    FINAL  = 3, ///< After anti-aliasing, before final blit.
+    COUNT  = 4, ///< Number of screen shader stages.
+}
+
 @(default_calling_convention="c", link_prefix="R3D_")
 foreign lib {
     /**
@@ -130,21 +159,22 @@ foreign lib {
     SetScreenShaderSampler :: proc(shader: ^ScreenShader, name: cstring, texture: rl.Texture) ---
 
     /**
-     * @brief Sets the list of screen shaders to execute at the end of the frame.
+     * @brief Sets the screen shader chain for a given stage.
      *
-     * The maximum number of shaders is defined by `R3D_MAX_SCREEN_SHADERS`.
-     * If the provided count exceeds this limit, a warning is emitted and only
-     * the first `R3D_MAX_SCREEN_SHADERS` shaders are used.
+     * Screen shaders are executed in the order provided. The maximum number of
+     * shaders per stage is `R3D_MAX_SCREEN_SHADERS`; extra entries are ignored
+     * and a warning is emitted.
      *
-     * Shader pointers are copied internally, so the original array can be modified or freed after the call.
-     * NULL entries are allowed safely within the list.
+     * Shader pointers are copied internally, so the original array may be modified
+     * or freed after the call. NULL entries are allowed and skipped safely.
      *
-     * Calling this function resets all internal screen shaders before copying the new list.
-     * To disable all screen shaders, call this function with `shaders = NULL` and/or `count = 0`.
+     * Calling this function replaces the previous chain for the selected stage.
+     * To clear a stage, pass `shaders = NULL` or `count = 0`.
      *
+     * @param stage Screen shader stage to configure.
      * @param shaders Array of pointers to R3D_ScreenShader objects.
      * @param count Number of shaders in the array.
      */
-    SetScreenShaderChain :: proc(shaders: [^]^ScreenShader, count: i32) ---
+    SetScreenShaderChain :: proc(stage: ScreenShaderStage, shaders: [^]^ScreenShader, count: i32) ---
 }
 

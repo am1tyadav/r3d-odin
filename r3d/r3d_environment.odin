@@ -154,20 +154,6 @@ EnvSSR :: struct {
 }
 
 /**
- * @brief Bloom post-processing settings.
- *
- * Glow effect around bright areas in the scene.
- */
-EnvBloom :: struct {
-    mode:          Bloom, ///< Bloom blending mode (default: R3D_BLOOM_DISABLED)
-    levels:        f32,   ///< Mipmap spread factor [0-1]: higher = wider glow (default: 0.5)
-    intensity:     f32,   ///< Bloom strength multiplier (default: 0.05)
-    threshold:     f32,   ///< Minimum brightness to trigger bloom (default: 0.0)
-    softThreshold: f32,   ///< Softness of brightness cutoff transition (default: 0.5)
-    filterRadius:  f32,   ///< Blur filter radius during upscaling (default: 1.0)
-}
-
-/**
  * @brief Fog atmospheric effect settings.
  */
 EnvFog :: struct {
@@ -190,6 +176,42 @@ EnvDoF :: struct {
     focusScale:  f32, ///< Depth of field depth: lower = shallower (default: 1.0)
     nearScale:   f32, ///< Near blur intensity: 0.0 = disabled, 1.0 = symmetric to far (default: 1.0)
     maxBlurSize: f32, ///< Maximum blur radius, similar to aperture (default: 20.0)
+}
+
+/**
+ * @brief Bloom post-processing settings.
+ *
+ * Glow effect around bright areas in the scene.
+ */
+EnvBloom :: struct {
+    mode:          Bloom, ///< Bloom blending mode (default: R3D_BLOOM_DISABLED)
+    levels:        f32,   ///< Mipmap spread factor [0-1]: higher = wider glow (default: 0.5)
+    intensity:     f32,   ///< Bloom strength multiplier (default: 0.05)
+    threshold:     f32,   ///< Minimum brightness to trigger bloom (default: 0.0)
+    softThreshold: f32,   ///< Softness of brightness cutoff transition (default: 0.5)
+    filterRadius:  f32,   ///< Blur filter radius during upscaling (default: 1.0)
+}
+
+/**
+ * @brief Auto exposure post-processing settings.
+ *
+ * Automatically adjusts scene exposure from average luminance,
+ * simulating eye adaptation. Adaptation should physically be
+ * faster toward bright scenes than toward dark scenes,
+ * as dark adaptation is slower.
+ *
+ * @warning Current implementation keeps a single temporal history. Enabling
+ * auto exposure for multiple scene passes in the same frame, or across
+ * different scenes, may produce incorrect adaptation. For now, use it only on
+ * one continuous begin/end scene render path.
+ */
+EnvAutoExposure :: struct {
+    minEV:                f32,  ///< Minimum measured luminance in EV stops, relative to middle gray (default: -1.0)
+    maxEV:                f32,  ///< Maximum measured luminance in EV stops, relative to middle gray (default:  1.0)
+    exposureCompensation: f32,  ///< Artistic exposure bias in EV stops: +1 = one stop brighter (default: 0.0)
+    adaptationToBright:   f32,  ///< Time constant in seconds when scene luminance increases; lower = faster (default: 0.5)
+    adaptationToDark:     f32,  ///< Time constant in seconds when scene luminance decreases; lower = faster (default: 1.0)
+    enabled:              bool, ///< Enable auto exposure (default: false)
 }
 
 /**
@@ -221,17 +243,18 @@ EnvColor :: struct {
  * Initialize with R3D_ENVIRONMENT_BASE for default values.
  */
 Environment :: struct {
-    background: EnvBackground, ///< Background and skybox settings
-    ambient:    EnvAmbient,    ///< Ambient lighting configuration
-    ssao:       EnvSSAO,       ///< Screen space ambient occlusion
-    ssil:       EnvSSIL,       ///< Screen space indirect lighting
-    ssgi:       EnvSSGI,       ///< Screen space global illumination
-    ssr:        EnvSSR,        ///< Screen space reflections
-    bloom:      EnvBloom,      ///< Bloom glow effect
-    fog:        EnvFog,        ///< Atmospheric fog
-    dof:        EnvDoF,        ///< Depth of field focus effect
-    tonemap:    EnvTonemap,    ///< HDR tone mapping
-    color:      EnvColor,      ///< rl.Color grading adjustments
+    background:   EnvBackground,   ///< Background and skybox settings
+    ambient:      EnvAmbient,      ///< Ambient lighting configuration
+    ssao:         EnvSSAO,         ///< Screen space ambient occlusion
+    ssil:         EnvSSIL,         ///< Screen space indirect lighting
+    ssgi:         EnvSSGI,         ///< Screen space global illumination
+    ssr:          EnvSSR,          ///< Screen space reflections
+    fog:          EnvFog,          ///< Atmospheric fog
+    dof:          EnvDoF,          ///< Depth of field focus effect
+    bloom:        EnvBloom,        ///< Bloom glow effect
+    autoExposure: EnvAutoExposure, ///< Auto exposure effect
+    tonemap:      EnvTonemap,      ///< HDR tone mapping
+    color:        EnvColor,        ///< rl.Color grading adjustments
 }
 
 @(default_calling_convention="c", link_prefix="R3D_")
@@ -313,14 +336,6 @@ ENVIRONMENT_BASE :: Environment {
         edgeFade    = 0.25,
         enabled     = false,
     },
-    bloom = {
-        mode          = .DISABLED,
-        levels        = 0.5,
-        intensity     = 0.05,
-        threshold     = 0.0,
-        softThreshold = 0.5,
-        filterRadius  = 1.0,
-    },
     fog = {
         mode      = .DISABLED,
         color     = {255, 255, 255, 255},
@@ -335,6 +350,22 @@ ENVIRONMENT_BASE :: Environment {
         focusScale  = 1.0,
         nearScale   = 1.0,
         maxBlurSize = 20.0,
+    },
+    bloom = {
+        mode          = .DISABLED,
+        levels        = 0.5,
+        intensity     = 0.05,
+        threshold     = 0.0,
+        softThreshold = 0.5,
+        filterRadius  = 1.0,
+    },
+    autoExposure = {
+        minEV                = -1.0,
+        maxEV                = 1.0,
+        exposureCompensation = 0.0,
+        adaptationToBright   = 0.5,
+        adaptationToDark     = 1.0,
+        enabled = false,
     },
     tonemap = {
         mode     = .LINEAR,
