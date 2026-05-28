@@ -497,6 +497,29 @@ foreign lib {
     SetShadowSoftness :: proc(id: Light, softness: f32) ---
 
     /**
+     * @brief Retrieves the shadow opacity for a light.
+     *
+     * @param id The ID of the light.
+     * @return The current shadow opacity.
+     */
+    GetShadowOpacity :: proc(id: Light) -> f32 ---
+
+    /**
+     * @brief Sets the shadow opacity for a light.
+     *
+     * The opacity controls the visual strength of shadows. A value of 0 makes shadows
+     * fully transparent, while 1 applies full opacity. Values are not clamped, but the
+     * usual range is 0 to 1.
+     *
+     * When the opacity is exactly 0, the light still owns its shadow map, but shadow
+     * map rendering and shadow application are entirely skipped.
+     *
+     * @param id The ID of the light.
+     * @param opacity The shadow opacity to apply.
+     */
+    SetShadowOpacity :: proc(id: Light, opacity: f32) ---
+
+    /**
      * @brief Gets the shadow depth bias value.
      */
     GetShadowDepthBias :: proc(id: Light) -> f32 ---
@@ -524,6 +547,36 @@ foreign lib {
      * incorrectly appearing or disappearing along object edges.
      */
     SetShadowSlopeBias :: proc(id: Light, value: f32) ---
+
+    /**
+     * @brief Gets the shadow caster mask.
+     */
+    GetShadowCasterMask :: proc(id: Light) -> Layer ---
+
+    /**
+     * @brief Replaces the shadow caster mask.
+     */
+    SetShadowCasterMask :: proc(id: Light, cullMask: Layer) ---
+
+    /**
+     * @brief Enables one or more layers in the shadow caster mask.
+     */
+    EnableShadowCasterLayers :: proc(id: Light, layerMask: Layer) ---
+
+    /**
+     * @brief Disables one or more layers from the shadow caster mask.
+     */
+    DisableShadowCasterLayers :: proc(id: Light, layerMask: Layer) ---
+
+    /**
+     * @brief Toggles one or more layers in the shadow caster mask.
+     */
+    ToggleShadowCasterLayers :: proc(id: Light, layerMask: Layer) ---
+
+    /**
+     * @brief Checks whether at least one object layer is visible to the shadow caster.
+     */
+    IsShadowCasterLayerVisible :: proc(id: Light, layerMask: Layer) -> bool ---
 
     /**
      * @brief Returns the bounding box encompassing the light's area of influence.
