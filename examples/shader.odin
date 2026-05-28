@@ -42,7 +42,7 @@ main :: proc() {
     shader := r3d.LoadScreenShader("./resources/shaders/screen.glsl")
     defer r3d.UnloadScreenShader(shader)
     shaderPtr := shader
-    r3d.SetScreenShaderChain(&shaderPtr, 1)
+    r3d.SetScreenShaderChain(.OUTPUT, &shaderPtr, 1)
 
     // Create light
     light := r3d.CreateLight(.SPOT)
