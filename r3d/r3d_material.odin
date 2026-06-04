@@ -144,6 +144,7 @@ OrmMap :: struct {
     occlusion: f32,       ///< Occlusion multiplier (default: 1.0f)
     roughness: f32,       ///< Roughness multiplier (default: 1.0f)
     metalness: f32,       ///< Metalness multiplier (default: 0.0f)
+    specular:  f32,       ///< Controls how reflective non-metal materials appear (default: 0.5f)
 }
 
 /**
@@ -384,9 +385,10 @@ foreign lib {
      * @param occlusion Occlusion multiplier.
      * @param roughness Roughness multiplier.
      * @param metalness Metalness multiplier.
+     * @param specular Base reflectivity multiplier for non-metal materials.
      * @return ORM map. Returns an empty map on failure.
      */
-    LoadOrmMap :: proc(fileName: cstring, occlusion: f32, roughness: f32, metalness: f32) -> OrmMap ---
+    LoadOrmMap :: proc(fileName: cstring, occlusion: f32, roughness: f32, metalness: f32, specular: f32) -> OrmMap ---
 
     /**
      * @brief Load a combined ORM (Occlusion-Roughness-Metalness) map from memory.
@@ -399,9 +401,10 @@ foreign lib {
      * @param occlusion Occlusion multiplier.
      * @param roughness Roughness multiplier.
      * @param metalness Metalness multiplier.
+     * @param specular Base reflectivity multiplier for non-metal materials.
      * @return ORM map. Returns an empty map on failure.
      */
-    LoadOrmMapFromMemory :: proc(fileType: cstring, fileData: rawptr, dataSize: i32, occlusion: f32, roughness: f32, metalness: f32) -> OrmMap ---
+    LoadOrmMapFromMemory :: proc(fileType: cstring, fileData: rawptr, dataSize: i32, occlusion: f32, roughness: f32, metalness: f32, specular: f32) -> OrmMap ---
 
     /**
      * @brief Unload an ORM map texture.
