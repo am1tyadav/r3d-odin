@@ -31,7 +31,7 @@ main :: proc() {
     // Create directional light
     light := r3d.CreateLight(.DIR)
     r3d.SetLightDirection(light, {0, -1, 0})
-    r3d.SetLightActive(light, true)
+    r3d.EnableLight(light)
 
     // Create sphere mesh and default material
     meshSphere := r3d.GenMeshSphere(0.2, 64, 64)

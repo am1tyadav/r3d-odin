@@ -56,7 +56,7 @@ main :: proc() {
     r3d.SetLightDirection(light, {-1, -1, -1})
     r3d.SetShadowDepthBias(light, 0.01)
     r3d.EnableShadow(light)
-    r3d.SetLightActive(light, true)
+    r3d.EnableLight(light)
     r3d.SetLightRange(light, 32.0)
 
     // Setup camera

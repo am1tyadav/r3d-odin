@@ -55,7 +55,7 @@ main :: proc() {
     // Setup lights with shadows
     light := r3d.CreateLight(.DIR)
     r3d.SetLightDirection(light, {-1.0, -1.0, -1.0})
-    r3d.SetLightActive(light, true)
+    r3d.EnableLight(light)
     r3d.SetLightRange(light, 10.0)
     r3d.EnableShadow(light)
 

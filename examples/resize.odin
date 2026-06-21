@@ -45,7 +45,7 @@ main :: proc() {
     // Setup directional light
     light := r3d.CreateLight(.DIR)
     r3d.SetLightDirection(light, {0, 0, -1})
-    r3d.SetLightActive(light, true)
+    r3d.EnableLight(light)
 
     // Setup camera
     camera: rl.Camera3D = {

@@ -53,7 +53,7 @@ main :: proc() {
     // Create directional light with shadows
     light := r3d.CreateLight(.DIR)
     r3d.SetLightDirection(light, {-1, -1, -1})
-    r3d.SetLightActive(light, true)
+    r3d.EnableLight(light)
     r3d.SetLightRange(light, 16.0)
     r3d.SetShadowSoftness(light, 2.0)
     r3d.SetShadowDepthBias(light, 0.01)

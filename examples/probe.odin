@@ -38,8 +38,8 @@ main :: proc() {
 
     // Create light
     light := r3d.CreateLight(.SPOT)
-    r3d.LightLookAt(light, {0, 10, 5}, {0, 0, 0})
-    r3d.SetLightActive(light, true)
+    r3d.SetLightTarget(light, {0, 10, 5}, {0, 0, 0})
+    r3d.EnableLight(light)
     r3d.EnableShadow(light)
 
     // Create probe
@@ -47,7 +47,7 @@ main :: proc() {
     r3d.SetProbePosition(probe, {0, 1, 0})
     r3d.SetProbeShadows(probe, true)
     r3d.SetProbeFalloff(probe, 0.5)
-    r3d.SetProbeActive(probe, true)
+    r3d.EnableProbe(probe)
 
     // Setup camera
     camera: rl.Camera3D = {

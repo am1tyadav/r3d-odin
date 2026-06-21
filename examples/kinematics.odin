@@ -34,7 +34,7 @@ main :: proc() {
     light := r3d.CreateLight(.DIR)
     r3d.SetLightDirection(light, {-1, -1, -1})
     r3d.SetLightRange(light, 16.0)
-    r3d.SetLightActive(light, true)
+    r3d.EnableLight(light)
     r3d.EnableShadow(light)
     r3d.SetShadowDepthBias(light, 0.005)
 

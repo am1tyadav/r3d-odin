@@ -51,8 +51,8 @@ main :: proc() {
     env := r3d.GetEnvironment()
     env.ambient.color = {10, 10, 10, 255}
     light := r3d.CreateLight(.SPOT)
-    r3d.LightLookAt(light, {0, 10, 5}, {0, 0, 0})
-    r3d.SetLightActive(light, true)
+    r3d.SetLightTarget(light, {0, 10, 5}, {0, 0, 0})
+    r3d.EnableLight(light)
     r3d.EnableShadow(light)
 
     // Main loop

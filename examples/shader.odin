@@ -46,9 +46,9 @@ main :: proc() {
 
     // Create light
     light := r3d.CreateLight(.SPOT)
-    r3d.LightLookAt(light, {0, 10, 5}, {0, 0, 0})
+    r3d.SetLightTarget(light, {0, 10, 5}, {0, 0, 0})
     r3d.EnableShadow(light)
-    r3d.SetLightActive(light, true)
+    r3d.EnableLight(light)
 
     // Setup camera
     camera: rl.Camera3D = {

@@ -51,7 +51,7 @@ main :: proc() {
         r3d.SetLightPosition(lights[i], {randf(-50.0, 50.0), randf(1.0, 5.0), randf(-50.0, 50.0)})
         r3d.SetLightColor(lights[i], rl.ColorFromHSV(randf(0.0, 360.0), 1.0, 1.0))
         r3d.SetLightRange(lights[i], randf(8.0, 16.0))
-        r3d.SetLightActive(lights[i], true)
+        r3d.EnableLight(lights[i])
     }
 
     // Setup camera
@@ -80,7 +80,7 @@ main :: proc() {
             if rl.IsKeyDown(.F) {
                 rl.BeginMode3D(camera)
                     for i in 0..<NUM_LIGHTS {
-                        r3d.DrawLightShape(lights[i])
+                        r3d.DrawLightDebug(lights[i])
                     }
                 rl.EndMode3D()
             }
