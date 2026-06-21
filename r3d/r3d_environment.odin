@@ -154,7 +154,7 @@ EnvSSR :: struct {
 }
 
 /**
- * @brief Fog atmospheric effect settings.
+ * @brief Atmospheric fog effect settings.
  */
 EnvFog :: struct {
     mode:      Fog,   ///< Fog distribution mode (default: R3D_FOG_DISABLED)
@@ -163,6 +163,22 @@ EnvFog :: struct {
     end:       f32,   ///< Linear mode: distance of full fog density (default: 50.0)
     density:   f32,   ///< Exponential modes: fog thickness factor (default: 0.05)
     skyAffect: f32,   ///< Fog influence on skybox [0-1] (default: 0.5)
+}
+
+/**
+ * @brief Volumetric fog effect settings.
+ */
+VolumetricFog :: struct {
+    scatteringDensity: f32,   ///< Light scattering thickness; higher = more visible light rays (default: 0.01)
+    absortionDensity:  f32,   ///< Light absorption thickness; higher = darker scene (default: 0.03)
+    scatteringColor:   rl.Color, ///< Tint color of scattered light rays (default: WHITE)
+    anisotropy:        f32,   ///< Scattering direction: 0 = uniform, >0 = forward (haze), <0 = backward (default: 0.5)
+    emissionColor:     rl.Color, ///< rl.Color emitted by the fog regardless of lighting (default: WHITE)
+    emissionEnergy:    f32,   ///< Emission brightness; 0 disables emission (default: 0.0)
+    skyAffect:         f32,   ///< Fog influence on the skybox [0-1] (default: 0.5)
+    length:            f32,   ///< Maximum fog render distance in world units (default: 50.0)
+    stepSize:          f32,   ///< rl.Ray-march step size; smaller = higher quality, lower performance (default: 1.0)
+    enabled:           bool,  ///< Enables or disables the volumetric fog (default: false)
 }
 
 /**
@@ -243,18 +259,19 @@ EnvColor :: struct {
  * Initialize with R3D_ENVIRONMENT_BASE for default values.
  */
 Environment :: struct {
-    background:   EnvBackground,   ///< Background and skybox settings
-    ambient:      EnvAmbient,      ///< Ambient lighting configuration
-    ssao:         EnvSSAO,         ///< Screen space ambient occlusion
-    ssil:         EnvSSIL,         ///< Screen space indirect lighting
-    ssgi:         EnvSSGI,         ///< Screen space global illumination
-    ssr:          EnvSSR,          ///< Screen space reflections
-    fog:          EnvFog,          ///< Atmospheric fog
-    dof:          EnvDoF,          ///< Depth of field focus effect
-    bloom:        EnvBloom,        ///< Bloom glow effect
-    autoExposure: EnvAutoExposure, ///< Auto exposure effect
-    tonemap:      EnvTonemap,      ///< HDR tone mapping
-    color:        EnvColor,        ///< rl.Color grading adjustments
+    background:    EnvBackground,   ///< Background and skybox settings
+    ambient:       EnvAmbient,      ///< Ambient lighting configuration
+    ssao:          EnvSSAO,         ///< Screen space ambient occlusion
+    ssil:          EnvSSIL,         ///< Screen space indirect lighting
+    ssgi:          EnvSSGI,         ///< Screen space global illumination
+    ssr:           EnvSSR,          ///< Screen space reflections
+    fog:           EnvFog,          ///< Atmospheric fog
+    volumetricFog: VolumetricFog,   ///< Volumetric fog
+    dof:           EnvDoF,          ///< Depth of field focus effect
+    bloom:         EnvBloom,        ///< Bloom glow effect
+    autoExposure:  EnvAutoExposure, ///< Auto exposure effect
+    tonemap:       EnvTonemap,      ///< HDR tone mapping
+    color:         EnvColor,        ///< rl.Color grading adjustments
 }
 
 @(default_calling_convention="c", link_prefix="R3D_")
@@ -343,6 +360,18 @@ ENVIRONMENT_BASE :: Environment {
         end       = 50.0,
         density   = 0.05,
         skyAffect = 0.5,
+    },
+    volumetricFog = {
+        scatteringDensity = 0.01,
+        absortionDensity  = 0.03,
+        scatteringColor   = {255, 255, 255, 255},
+        anisotropy        = 0.5,
+        emissionColor     = {255, 255, 255, 255},
+        emissionEnergy    = 0.0,
+        skyAffect         = 0.5,
+        length            = 50.0,
+        stepSize          = 1.0,
+        enabled           = false,
     },
     dof = {
         mode        = .DISABLED,

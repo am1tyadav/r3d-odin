@@ -61,12 +61,12 @@ foreign lib {
     DestroyProbe :: proc(id: Probe) ---
 
     /**
-     * @brief Returns whether a probe exists.
+     * @brief Returns whether a probe ID is valid and allocated.
      *
      * @param id Probe ID.
-     * @return true if the probe is valid and allocated, otherwise false.
+     * @return true if the probe exists, otherwise false.
      */
-    IsProbeExist :: proc(id: Probe) -> bool ---
+    IsProbeValid :: proc(id: Probe) -> bool ---
 
     /**
      * @brief Returns the probe flags.
@@ -77,22 +77,42 @@ foreign lib {
     GetProbeFlags :: proc(id: Probe) -> ProbeFlags ---
 
     /**
-     * @brief Returns whether a probe is currently active.
+     * @brief Returns whether a probe is currently enabled.
      *
-     * Inactive probes do not contribute to lighting.
+     * Disabled probes do not contribute to lighting.
      *
      * @param id Probe ID.
-     * @return true if active, otherwise false.
+     * @return true if the probe is enabled, otherwise false.
      */
-    IsProbeActive :: proc(id: Probe) -> bool ---
+    IsProbeEnabled :: proc(id: Probe) -> bool ---
 
     /**
-     * @brief Enables or disables a probe.
+     * @brief Toggles a probe between enabled and disabled states.
+     *
+     * Re-enabling a probe schedules a scene capture on the next frame.
      *
      * @param id Probe ID.
-     * @param active Set to true to enable the probe.
      */
-    SetProbeActive :: proc(id: Probe, active: bool) ---
+    ToggleProbe :: proc(id: Probe) ---
+
+    /**
+     * @brief Enables a probe.
+     *
+     * Schedules a scene capture on the next frame.
+     * Has no effect if the probe is already enabled.
+     *
+     * @param id Probe ID.
+     */
+    EnableProbe :: proc(id: Probe) ---
+
+    /**
+     * @brief Disables a probe.
+     *
+     * Has no effect if the probe is already disabled.
+     *
+     * @param id Probe ID.
+     */
+    DisableProbe :: proc(id: Probe) ---
 
     /**
      * @brief Gets the probe update mode.

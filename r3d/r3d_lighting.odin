@@ -85,7 +85,7 @@ foreign lib {
      * @param id The ID of the light to check.
      * @return True if the light exists, false otherwise.
      */
-    IsLightExist :: proc(id: Light) -> bool ---
+    IsLightValid :: proc(id: Light) -> bool ---
 
     /**
      * @brief Gets the type of a light.
@@ -98,34 +98,37 @@ foreign lib {
     GetLightType :: proc(id: Light) -> LightType ---
 
     /**
-     * @brief Checks if a light is active.
+     * @brief Returns whether a light is currently enabled.
      *
-     * This function checks whether the specified light is currently active (enabled or disabled).
-     *
-     * @param id The ID of the light to check.
-     * @return True if the light is active, false otherwise.
+     * @param id The ID of the light to query.
+     * @return True if the light is enabled, false otherwise.
      */
-    IsLightActive :: proc(id: Light) -> bool ---
+    IsLightEnabled :: proc(id: Light) -> bool ---
 
     /**
-     * @brief Toggles the state of a light (active or inactive).
-     *
-     * This function toggles the state of the specified light, turning it on if it is off,
-     * or off if it is on.
+     * @brief Toggles a light between enabled and disabled states.
      *
      * @param id The ID of the light to toggle.
      */
     ToggleLight :: proc(id: Light) ---
 
     /**
-     * @brief Sets the active state of a light.
+     * @brief Enables a light.
      *
-     * This function allows manually turning a light on or off by specifying its active state.
+     * Has no effect if the light is already enabled.
      *
-     * @param id The ID of the light to set the active state for.
-     * @param active True to activate the light, false to deactivate it.
+     * @param id The ID of the light to enable.
      */
-    SetLightActive :: proc(id: Light, active: bool) ---
+    EnableLight :: proc(id: Light) ---
+
+    /**
+     * @brief Disables a light.
+     *
+     * Has no effect if the light is already disabled.
+     *
+     * @param id The ID of the light to disable.
+     */
+    DisableLight :: proc(id: Light) ---
 
     /**
      * @brief Gets the color of a light.
@@ -237,7 +240,7 @@ foreign lib {
      * @param position The position to set for the light.
      * @param target The point the light should look at.
      */
-    LightLookAt :: proc(id: Light, position: rl.Vector3, target: rl.Vector3) ---
+    SetLightTarget :: proc(id: Light, position: rl.Vector3, target: rl.Vector3) ---
 
     /**
      * @brief Gets the energy level of a light.
@@ -306,74 +309,60 @@ foreign lib {
     SetLightRange :: proc(id: Light, range: f32) ---
 
     /**
-     * @brief Gets the attenuation factor of a light.
+     * @brief Gets the falloff exponent of a light.
      *
-     * This function retrieves the attenuation factor of the specified light.
-     * Attenuation controls how the intensity of a light decreases with distance.
-     * Only applicable to spot lights or omni-lights.
+     * Controls the shape of the attenuation curve over the light's range.
+     * A value of 1.0 produces a linear falloff, 2.0 a quadratic (more physically
+     * plausible) falloff, and higher values concentrate the light closer to the source.
+     * Only applicable to spot lights and omni-lights.
      *
      * @param id The ID of the light.
-     * @return The attenuation factor of the light.
+     * @return The falloff exponent of the light.
      */
-    GetLightAttenuation :: proc(id: Light) -> f32 ---
+    GetLightFalloff :: proc(id: Light) -> f32 ---
 
     /**
-     * @brief Sets the attenuation factor of a light.
+     * @brief Sets the falloff exponent of a light.
      *
-     * This function sets the attenuation factor of the specified light.
-     * A higher attenuation value causes the light to lose intensity more quickly as the distance increases.
-     * For a realistic effect, an attenuation factor of 2.0f is typically used.
-     * Only applicable to spot lights or omni-lights.
+     * Controls the shape of the attenuation curve over the light's range.
+     * A value of 1.0 produces a linear falloff, 2.0 a quadratic (more physically
+     * plausible) falloff, and higher values concentrate the light closer to the source.
+     * Values of 0.0 or below are clamped to 1.0.
+     * Only applicable to spot lights and omni-lights.
      *
      * @param id The ID of the light.
-     * @param attenuation The new attenuation factor to set for the light.
+     * @param falloff The falloff exponent to set. Typical range is [0.5, 4.0].
      */
-    SetLightAttenuation :: proc(id: Light, attenuation: f32) ---
+    SetLightFalloff :: proc(id: Light, falloff: f32) ---
 
     /**
-     * @brief Gets the inner cutoff angle of a spotlight.
+     * @brief Gets the inner and outer cone angles of a spot light.
      *
-     * This function retrieves the inner cutoff angle of a spotlight.
-     * The inner cutoff defines the cone of light where the light is at full intensity.
+     * The inner angle defines the region of full intensity, and the outer angle
+     * defines where the light fully fades out. The transition between the two
+     * produces a soft edge. Both angles are in degrees.
+     * Only applicable to spot lights.
      *
      * @param id The ID of the light.
-     * @return The inner cutoff angle in degrees of the spotlight.
+     * @param inner Pointer to receive the inner cone angle, in degrees. May be NULL.
+     * @param outer Pointer to receive the outer cone angle, in degrees. May be NULL.
      */
-    GetLightInnerCutOff :: proc(id: Light) -> f32 ---
+    GetLightAngle :: proc(id: Light, inner: ^f32, outer: ^f32) ---
 
     /**
-     * @brief Sets the inner cutoff angle of a spotlight.
+     * @brief Sets the inner and outer cone angles of a spot light.
      *
-     * This function sets the inner cutoff angle of a spotlight.
-     * The inner cutoff angle defines the cone where the light is at full intensity.
-     * Anything outside this cone starts to fade.
-     *
-     * @param id The ID of the light.
-     * @param degrees The new inner cutoff angle in degrees.
-     */
-    SetLightInnerCutOff :: proc(id: Light, degrees: f32) ---
-
-    /**
-     * @brief Gets the outer cutoff angle of a spotlight.
-     *
-     * This function retrieves the outer cutoff angle of a spotlight.
-     * The outer cutoff defines the outer boundary of the light's cone, where the light starts to fade.
+     * The inner angle defines the region of full intensity, and the outer angle
+     * defines where the light fully fades out. The transition between the two
+     * produces a soft edge. Both angles are in degrees. If inner exceeds outer,
+     * the two values are swapped automatically.
+     * Only applicable to spot lights.
      *
      * @param id The ID of the light.
-     * @return The outer cutoff angle in degrees of the spotlight.
+     * @param inner The inner cone half-angle, in degrees.
+     * @param outer The outer cone half-angle, in degrees.
      */
-    GetLightOuterCutOff :: proc(id: Light) -> f32 ---
-
-    /**
-     * @brief Sets the outer cutoff angle of a spotlight.
-     *
-     * This function sets the outer cutoff angle of a spotlight.
-     * The outer cutoff defines the boundary of the light's cone where the light intensity starts to gradually decrease.
-     *
-     * @param id The ID of the light.
-     * @param degrees The new outer cutoff angle in degrees.
-     */
-    SetLightOuterCutOff :: proc(id: Light, degrees: f32) ---
+    SetLightAngle :: proc(id: Light, inner: f32, outer: f32) ---
 
     /**
      * @brief Enables shadow rendering for a light.
@@ -437,28 +426,24 @@ foreign lib {
     SetShadowUpdateMode :: proc(id: Light, mode: ShadowUpdateMode) ---
 
     /**
-     * @brief Gets the frequency of shadow map updates for the interval update mode.
+     * @brief Gets the interval between shadow map updates in interval update mode.
      *
-     * This function retrieves the frequency (in milliseconds) at which the shadow map should be updated when
-     * the interval update mode is enabled. This function is only relevant if the shadow map update mode is set
-     * to "Interval".
+     * Only relevant when the shadow update mode is set to @ref R3D_SHADOW_UPDATE_INTERVAL.
      *
      * @param id The ID of the light.
-     * @return The frequency in milliseconds at which the shadow map is updated.
+     * @return The interval in seconds between shadow map updates.
      */
-    GetShadowUpdateFrequency :: proc(id: Light) -> i32 ---
+    GetShadowUpdateInterval :: proc(id: Light) -> f32 ---
 
     /**
-     * @brief Sets the frequency of shadow map updates for the interval update mode.
+     * @brief Sets the interval between shadow map updates in interval update mode.
      *
-     * This function sets the frequency (in milliseconds) at which the shadow map should be updated when
-     * the interval update mode is enabled. This function is only relevant if the shadow map update mode is set
-     * to "Interval".
+     * Only relevant when the shadow update mode is set to @ref R3D_SHADOW_UPDATE_INTERVAL.
      *
      * @param id The ID of the light.
-     * @param msec The frequency in milliseconds at which to update the shadow map.
+     * @param seconds The interval in seconds between shadow map updates.
      */
-    SetShadowUpdateFrequency :: proc(id: Light, msec: i32) ---
+    SetShadowUpdateInterval :: proc(id: Light, seconds: f32) ---
 
     /**
      * @brief Forces an immediate update of the shadow map during the next rendering pass.
@@ -608,6 +593,6 @@ foreign lib {
      *
      * @param id The ID of the light.
      */
-    DrawLightShape :: proc(id: Light) ---
+    DrawLightDebug :: proc(id: Light) ---
 }
 
