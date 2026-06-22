@@ -64,5 +64,16 @@ foreign lib {
      * @return The converted linear color as a rl.Vector3.
      */
     ColorFromCurrentSpaceVector3 :: proc(color: rl.Color) -> rl.Vector3 ---
+
+    /**
+     * @brief Converts a color temperature to an sRGB color.
+     *
+     * Uses the Tanner Helland approximation, valid between 1000K and 40000K.
+     * Results outside the valid range are undefined.
+     *
+     * @param kelvin The color temperature in Kelvin.
+     * @return The corresponding color as an sRGB rl.Color.
+     */
+    ColorFromTemperature :: proc(kelvin: f32) -> rl.Color ---
 }
 

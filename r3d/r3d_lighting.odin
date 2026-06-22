@@ -131,46 +131,55 @@ foreign lib {
     DisableLight :: proc(id: Light) ---
 
     /**
-     * @brief Gets the color of a light.
+     * @brief Gets the color of a light in sRGB space.
      *
-     * This function retrieves the color of the specified light as a `rl.Color` structure.
+     * The internal linear color is converted to sRGB before being returned.
      *
      * @param id The ID of the light.
-     * @return The color of the light as a `rl.Color` structure.
+     * @return The color of the light as an sRGB @ref rl.Color.
      */
     GetLightColor :: proc(id: Light) -> rl.Color ---
 
     /**
-     * @brief Gets the color of a light as a `rl.Vector3`.
+     * @brief Sets the color of a light from an sRGB color.
      *
-     * This function retrieves the color of the specified light as a `rl.Vector3`, where each
-     * component (x, y, z) represents the RGB values of the light.
-     *
-     * @param id The ID of the light.
-     * @return The color of the light as a `rl.Vector3`.
-     */
-    GetLightColorV :: proc(id: Light) -> rl.Vector3 ---
-
-    /**
-     * @brief Sets the color of a light.
-     *
-     * This function sets the color of the specified light using a `rl.Color` structure.
+     * The provided sRGB color is converted to linear space before being stored internally.
      *
      * @param id The ID of the light.
-     * @param color The new color to set for the light.
+     * @param color The new color to set for the light, in sRGB space.
      */
     SetLightColor :: proc(id: Light, color: rl.Color) ---
 
     /**
-     * @brief Sets the color of a light using a `rl.Vector3`.
+     * @brief Gets the color of a light in linear space.
      *
-     * This function sets the color of the specified light using a `rl.Vector3`, where each
-     * component (x, y, z) represents the RGB values of the light.
+     * Returns the raw internal color without any color space conversion.
      *
      * @param id The ID of the light.
-     * @param color The new color to set for the light as a `rl.Vector3`.
+     * @return The color of the light as a linear RGB @ref rl.Vector3.
      */
-    SetLightColorV :: proc(id: Light, color: rl.Vector3) ---
+    GetLightColorLinear :: proc(id: Light) -> rl.Vector3 ---
+
+    /**
+     * @brief Sets the color of a light from a linear RGB color.
+     *
+     * The provided value is stored as-is, without any color space conversion.
+     *
+     * @param id The ID of the light.
+     * @param color The new color to set for the light, in linear space.
+     */
+    SetLightColorLinear :: proc(id: Light, color: rl.Vector3) ---
+
+    /**
+     * @brief Sets the color of a light from a color temperature.
+     *
+     * Converts the given temperature to an sRGB color using the Tanner Helland approximation,
+     * then applies the appropriate sRGB-to-linear conversion before storing it internally.
+     *
+     * @param id The ID of the light.
+     * @param kelvin The color temperature in Kelvin. Valid range is 1000K to 40000K.
+     */
+    SetLightTemperature :: proc(id: Light, kelvin: f32) ---
 
     /**
      * @brief Gets the position of a light.
@@ -189,9 +198,9 @@ foreign lib {
      * This function sets the position of the specified light.
      * Only applicable to spot lights or omni-lights.
      *
-     * @note Has no effect for directional lights.
-     *       If called on a directional light,
-     *       a warning will be logged.
+     * @note For directional lights, the position is stored internally but has no effect
+     *       on lighting calculations. It can still be retrieved via @ref R3D_GetLightPosition
+     *       and may be used for debug visualization with @ref R3D_DrawLightDebug.
      *
      * @param id The ID of the light.
      * @param position The new position to set for the light.
@@ -231,10 +240,11 @@ foreign lib {
      * This function sets both the position and the direction of the specified light,
      * causing it to "look at" a given target point.
      *
-     * @note - For directional lights, only the direction is updated (position is ignored).
+     * @note - For directional lights, only the direction is updated. The position is stored
+     *         internally but has no effect on lighting calculations; it may still be used
+     *         for debug visualization with @ref R3D_DrawLightDebug.
      *       - For omni-directional lights, only the position is updated (direction is not calculated).
      *       - For spot lights, both position and direction are set accordingly.
-     *       - This function does **not** emit any warning or log message.
      *
      * @param id The ID of the light.
      * @param position The position to set for the light.
@@ -244,9 +254,6 @@ foreign lib {
 
     /**
      * @brief Gets the energy level of a light.
-     *
-     * This function retrieves the energy level (intensity) of the specified light.
-     * Energy typically affects the brightness of the light.
      *
      * @param id The ID of the light.
      * @return The energy level of the light.
@@ -263,6 +270,30 @@ foreign lib {
      * @param energy The new energy value to set for the light.
      */
     SetLightEnergy :: proc(id: Light, energy: f32) ---
+
+    /**
+     * @brief Gets the energy level of a light as a luminous flux.
+     *
+     * Converts the light's current energy factor to lumens using a reference distance of 1 unit,
+     * assuming 1 unit = 1 meter. For a custom reference distance, use @ref R3D_EnergyToLumens
+     * with @ref R3D_GetLightEnergy directly.
+     *
+     * @param id The ID of the light.
+     * @return The luminous flux in lumens.
+     */
+    GetLightLumen :: proc(id: Light) -> f32 ---
+
+    /**
+     * @brief Sets the energy of a light from a luminous flux value.
+     *
+     * Converts the given flux to an energy factor using a reference distance of 1 unit,
+     * assuming 1 unit = 1 meter. For a custom reference distance, use @ref R3D_LumensToEnergy
+     * and pass the result to @ref R3D_SetLightEnergy directly.
+     *
+     * @param id The ID of the light.
+     * @param lumens The luminous flux in lumens.
+     */
+    SetLightLumen :: proc(id: Light, lumens: f32) ---
 
     /**
      * @brief Gets the specular intensity of a light.
@@ -363,6 +394,26 @@ foreign lib {
      * @param outer The outer cone half-angle, in degrees.
      */
     SetLightAngle :: proc(id: Light, inner: f32, outer: f32) ---
+
+    /**
+     * @brief Gets the volumetric fog energy multiplier of a light.
+     *
+     * @param id The ID of the light.
+     * @return The volumetric fog energy multiplier of the light.
+     */
+    GetLightFogEnergy :: proc(id: Light) -> f32 ---
+
+    /**
+     * @brief Sets the volumetric fog energy multiplier of a light.
+     *
+     * The final fog contribution is the light's energy multiplied by this factor,
+     * allowing fine-grained control over its volumetric fog intensity independently
+     * of its regular lighting contribution.
+     *
+     * @param id The ID of the light.
+     * @param energy The new volumetric fog energy multiplier to set for the light.
+     */
+    SetLightFogEnergy :: proc(id: Light, energy: f32) ---
 
     /**
      * @brief Enables shadow rendering for a light.
@@ -594,5 +645,28 @@ foreign lib {
      * @param id The ID of the light.
      */
     DrawLightDebug :: proc(id: Light) ---
+
+    /**
+     * @brief Converts a luminous flux to an energy factor.
+     *
+     * Computes the illuminance in lux at the given reference distance from an isotropic
+     * point source: `energy = lumens / (4 * pi * distance * distance)`
+     *
+     * @param lumens The luminous flux in lumens.
+     * @param referenceDistance The reference distance in scene units (1 unit = 1 meter).
+     * @return The corresponding energy factor.
+     */
+    LumensToEnergy :: proc(lumens: f32, referenceDistance: f32) -> f32 ---
+
+    /**
+     * @brief Converts an energy factor back to a luminous flux.
+     *
+     * Inverse of @ref R3D_LumensToEnergy: `lumens = energy * 4 * pi * distance * distance`
+     *
+     * @param energy The energy factor.
+     * @param referenceDistance The reference distance in scene units (1 unit = 1 meter).
+     * @return The corresponding luminous flux in lumens.
+     */
+    EnergyToLumens :: proc(energy: f32, referenceDistance: f32) -> f32 ---
 }
 
