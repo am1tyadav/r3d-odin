@@ -36,9 +36,10 @@ ProbeUpdateMode :: enum u32 {
 /**
  * @brief Unique identifier for an R3D probe.
  *
- * Negative values indicate an invalid probe.
+ * ID type used to reference a probe.
+ * A zero value indicates an invalid probe.
  */
-Probe :: i32
+Probe :: u32
 
 @(default_calling_convention="c", link_prefix="R3D_")
 foreign lib {

@@ -50,9 +50,9 @@ ShadowUpdateMode :: enum u32 {
  * @brief Unique identifier for an R3D light.
  *
  * ID type used to reference a light.
- * A negative value indicates an invalid light.
+ * A zero value indicates an invalid light.
  */
-Light :: i32
+Light :: u32
 
 @(default_calling_convention="c", link_prefix="R3D_")
 foreign lib {
