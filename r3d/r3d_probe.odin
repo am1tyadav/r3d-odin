@@ -133,6 +133,8 @@ foreign lib {
      *
      * Controls when the probe capture is refreshed.
      *
+     * Default: R3D_PROBE_UPDATE_ONCE
+     *
      * @param id Probe ID.
      * @param mode Update mode to apply.
      */
@@ -151,6 +153,8 @@ foreign lib {
 
     /**
      * @brief Enables or disables indoor mode for the probe.
+     *
+     * Default: false
      */
     SetProbeInterior :: proc(id: Probe, active: bool) ---
 
@@ -164,6 +168,8 @@ foreign lib {
 
     /**
      * @brief Enables or disables shadow rendering during probe capture.
+     *
+     * Default: false
      */
     SetProbeShadows :: proc(id: Probe, active: bool) ---
 
@@ -174,6 +180,8 @@ foreign lib {
 
     /**
      * @brief Sets the world position of the probe.
+     *
+     * Default: (rl.Vector3) {0.0f, 0.0f, 0.0f}
      */
     SetProbePosition :: proc(id: Probe, position: rl.Vector3) ---
 
@@ -189,6 +197,8 @@ foreign lib {
      * @brief Sets the effective range of the probe.
      *
      * @param range Radius in world units. Must be > 0.
+     *
+     * Default: 16.0f
      */
     SetProbeRange :: proc(id: Probe, range: f32) ---
 
@@ -211,6 +221,8 @@ foreign lib {
      * @brief Sets the falloff factor used for distance attenuation.
      *
      * Larger values make the probe feel more localized.
+     *
+     * Default: 1.0f
      */
     SetProbeFalloff :: proc(id: Probe, falloff: f32) ---
 }
