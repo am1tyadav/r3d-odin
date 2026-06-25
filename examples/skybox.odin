@@ -33,7 +33,7 @@ main :: proc() {
     r3d.SetSkyShaderUniform(shader, "u_line_px", &line_px)
 
     // Load and generate skyboxes
-    skyPanorama := r3d.LoadCubemap("./resources/panorama/sky.hdr", .AUTO_DETECT)
+    skyPanorama := r3d.LoadCubemap("./resources/panorama/sky.png", .AUTO_DETECT)
     defer r3d.UnloadCubemap(skyPanorama)
     skyProcedural := r3d.GenProceduralSky(1024, skyParams)
     defer r3d.UnloadCubemap(skyProcedural)
